@@ -17,7 +17,7 @@ app.get('/', function(req,res){
 // GET /todos?competed=true&q=work
 app.get('/todos', function(req,res){
   var queryParams = req.query; 
-  
+
   var filteredTodos = todos; 
 
   // if has property && completed === 'true'
@@ -41,14 +41,24 @@ app.get('/todos', function(req,res){
 // GET /todos/:id 
 app.get('/todos/:id', function(req,res){
   var todoId = parseInt(req.params.id, 10); 
-  var matchedTodo = _.findWhere(todos, {id: todoId});
 
-  if (matchedTodo){
-    res.json(matchedTodo); 
-  } else {
-    res.status(404).send(); 
-  }
+  db.todo.findById(todoId).then(function(todo){
+    if (!!todo){
+      res.json(todo.toJSON());
+    } else {
+      res.status(404).send(); 
+    } 
+  }, function(e){
+    res.status(500).send(); 
+  }); 
 });
+// var matchedTodo = _.findWhere(todos, {id: todoId});
+
+// if (matchedTodo){
+//   res.json(matchedTodo); 
+// } else {
+//   res.status(404).send(); 
+// }
 
 // POST create new todos ... /todos
 // need body-parser for this
@@ -108,17 +118,17 @@ app.put('/todos/:id', function(req,res){
   }
 
   if(body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
-      validAttributes.description = body.description ;   
+    validAttributes.description = body.description ;   
   } else if (body.hasOwnProperty('description')) {
     return res.status(400).send(); 
   }
-  
+
 
   // using underscore extend method
   _.extend(matchedTodo, validAttributes); 
 
   res.json(matchedTodo); 
-  
+
 }); 
 
 db.sequelize.sync().then(function(){
